@@ -37,6 +37,7 @@ func (proc *PdcSocketProtocol) Listen() {
 		eventtype, data, err := proc.Type(string(msg))
 		if err != nil {
 			log.Println("parsing error " + string(msg))
+			log.Println(err)
 			continue
 		}
 		log.Println(eventtype, data)

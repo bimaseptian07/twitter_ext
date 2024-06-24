@@ -1,6 +1,7 @@
 import { render } from "solid-js/web"
 import { v4 as uuidv4 } from 'uuid'
 import AppInjectFrontend, { setWorkState } from './InjectComponent'
+import { eventSerialize } from './socket-protocol'
 
 function createWebsocket(): Promise<WebSocket> {
     const prom = new Promise<WebSocket>((resolve, reject) => {
@@ -51,8 +52,11 @@ function injectXhr(){
             console.log(data)
         }
         wd.sendData = sendData
-
         injectFrontend()
+
+        ws.send(eventSerialize('eval_msg', {
+            exec: "ping"
+        }))
 
     })
 
