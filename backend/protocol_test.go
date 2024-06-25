@@ -6,7 +6,7 @@ func TestProtocol(t *testing.T) {
 	proc := PdcSocketProtocol{}
 
 	data, _ := proc.Serialize(&EvalMessage{
-		Exec: "alert('kampret was here')",
+		Script: "alert('kampret was here')",
 	})
 
 	t.Error(proc.Type(data))

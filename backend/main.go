@@ -1,7 +1,10 @@
 package main
 
 import (
+	"context"
 	"net/http"
+	"net/url"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -12,13 +15,23 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
+type FetchPost struct {
+	Uri string `json:"uri" binding:"required"`
+}
+
 func main() {
+
+	pool := NewWsPool()
+	callbackMapper := map[string]chan string{}
+
 	upgrader.CheckOrigin = func(r *http.Request) bool {
 		return true
 	}
 
 	router := gin.Default()
 	router.Use(CorsMiddleware)
+
+	// registering websocket connection
 	router.GET("/ws", func(c *gin.Context) {
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
@@ -26,29 +39,81 @@ func main() {
 		}
 		defer conn.Close()
 
-		go func() {
-			// data := `
-			// var url = "https://shopee.co.id/api/v4/search/search_items?by=relevancy&extra_params=%7B%22global_search_session_id%22%3A%22gs-e83e2c25-f514-4a75-8a4f-9484e71fb521%22%2C%22search_session_id%22%3A%22ss-5d732e0e-53f3-4dbd-b904-90dbc86c6efb%22%7D&keyword=asdvv&limit=60&newest=0&order=desc&page_type=search&scenario=PAGE_GLOBAL_SEARCH&version=2&view_session_id=afdb9b8a-4c35-4adf-bafc-bc5f466a4cf5"
+		proc := NewPdcSocketProtocol(conn)
+		pool.Add(proc)
+		defer pool.Remove(proc.ID)
 
-			// window.fetch(url).then(res => {
-			//     const cept = res.clone()
-			//     cept.json().then(data => {
-
-			//        window.sendData(data)
-
-			//     })
-			// })
-			// `
-			data := `console.log("kampret was here")`
-			conn.WriteMessage(websocket.TextMessage, []byte(data))
-		}()
-
-		proc := PdcSocketProtocol{
-			Con: conn,
-		}
-
+		proc.Register(
+			&JoinEvent{},
+			&FetchCallbackEvent{
+				mapperCallback: callbackMapper,
+			},
+		)
 		proc.Listen()
 	})
+
+	router.POST("fetch", func(ctx *gin.Context) {
+		callbackID := GenCallbackID()
+		timeoutctx, cancel := context.WithTimeout(ctx, time.Second*30)
+		defer cancel()
+
+		payload := FetchPost{}
+
+		err := ctx.BindJSON(&payload)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"message": "data payload tidak lengkap",
+			})
+			return
+		}
+		uri, err := url.Parse(payload.Uri)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"message": "url tidak bisa diparsing",
+			})
+			return
+		}
+
+		err = pool.RandomRoute(func(ws *PdcSocketProtocol) {
+			values := uri.Query()
+			values.Add("view_session_id", ws.ViewSessionID)
+			uri.RawQuery = values.Encode()
+
+			ruri := uri.String()
+			ws.Send(&FetchEvent{
+				CallbackID: callbackID,
+				RouteID:    ws.ID,
+				Url:        ruri,
+			})
+		})
+
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+			})
+			return
+		}
+		reschan := make(chan string, 1)
+		callbackMapper[callbackID] = reschan
+		defer func() {
+			delete(callbackMapper, callbackID)
+		}()
+		defer close(reschan)
+
+		select {
+		case <-timeoutctx.Done():
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"message": "data not fetched",
+			})
+		case data := <-reschan:
+			ctx.JSON(http.StatusOK, gin.H{
+				"message": "success",
+				"data":    data,
+			})
+		}
+
+	})
+
 	router.Run("localhost:8080")
 }
 
