@@ -90,7 +90,8 @@ func (proc *PdcSocketProtocol) ListeningMessage() {
 	for {
 		_, msg, err := proc.Con.ReadMessage()
 		if err != nil {
-			log.Println(err)
+			log.Println("error message", err)
+			close(proc.ErrChan)
 			break
 		}
 

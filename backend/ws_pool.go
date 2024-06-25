@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"log"
 	"sync"
 	"time"
 )
@@ -50,7 +51,7 @@ func (pool *WsPool) RandomRoute(
 			go handler(ws)
 			return nil
 		}
-
+		log.Println(step)
 		step += 1
 	}
 

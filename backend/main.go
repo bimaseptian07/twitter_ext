@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 	"time"
@@ -50,6 +51,7 @@ func main() {
 			},
 		)
 		proc.Listen()
+		fmt.Printf("closing connection for %s\n", proc.ID)
 	})
 
 	router.POST("fetch", func(ctx *gin.Context) {
