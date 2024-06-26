@@ -70,15 +70,14 @@ func main() {
 
 	router.POST("fetch", func(ctx *gin.Context) {
 		callbackID := GenCallbackID()
-		timeoutctx, cancel := context.WithTimeout(ctx, time.Second*30)
-		defer cancel()
 
 		payload := FetchPost{}
 
 		err := ctx.BindJSON(&payload)
 		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"message": "data payload tidak lengkap",
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				"message": "data payload tidak lengkap " + err.Error(),
+				"err":     err.Error(),
 			})
 			return
 		}
@@ -89,6 +88,9 @@ func main() {
 			})
 			return
 		}
+
+		timeoutctx, cancel := context.WithTimeout(context.TODO(), time.Second*10)
+		defer cancel()
 
 		err = pool.RandomRoute(func(ws *PdcSocketProtocol) {
 			values := uri.Query()

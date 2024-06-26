@@ -11,3 +11,7 @@ Support grab
 }
 ```
 
+# Limitasi
+1. setiap orang harus berkontribusi worker browser
+2. grab lebih baik terpusat
+3. tidak disarankan grab banyak pc, kasihan temen temennya kecuali juga support browser banyak

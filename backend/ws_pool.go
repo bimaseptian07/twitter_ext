@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type StatusPool struct {
+type StatusPoolEvent struct {
 	ConnectedWorker int `json:"connected_worker"`
 	ReadyWorker     int `json:"ready_worker"`
 }
@@ -89,8 +89,8 @@ func (pool *WsPool) Remove(ID string) {
 	}
 }
 
-func (pool *WsPool) GetPoolStatus() (*StatusPool, error) {
-	hasil := StatusPool{
+func (pool *WsPool) GetPoolStatus() (*StatusPoolEvent, error) {
+	hasil := StatusPoolEvent{
 		ConnectedWorker: pool.count,
 		ReadyWorker:     0,
 	}
