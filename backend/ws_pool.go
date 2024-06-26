@@ -7,6 +7,11 @@ import (
 	"time"
 )
 
+type StatusPool struct {
+	ConnectedWorker int `json:"connected_worker"`
+	ReadyWorker     int `json:"ready_worker"`
+}
+
 type WsPool struct {
 	count     int
 	lastState int
@@ -83,4 +88,21 @@ func (pool *WsPool) Remove(ID string) {
 	if pool.lastState >= pool.count {
 		pool.lastState = 0
 	}
+}
+
+func (pool *WsPool) GetPoolStatus() (*StatusPool, error) {
+	hasil := StatusPool{
+		ConnectedWorker: pool.count,
+		ReadyWorker:     0,
+	}
+
+	for _, item := range pool.Data {
+		if item.ViewSessionID == "" {
+			continue
+		}
+
+		hasil.ReadyWorker += 1
+	}
+
+	return &hasil, nil
 }

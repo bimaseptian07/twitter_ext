@@ -54,6 +54,19 @@ func main() {
 		fmt.Printf("closing connection for %s\n", proc.ID)
 	})
 
+	router.GET("status", func(ctx *gin.Context) {
+		hasil, err := pool.GetPoolStatus()
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"message": err.Error(),
+			})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, hasil)
+
+	})
+
 	router.POST("fetch", func(ctx *gin.Context) {
 		callbackID := GenCallbackID()
 		timeoutctx, cancel := context.WithTimeout(ctx, time.Second*30)

@@ -2,14 +2,20 @@ import { render } from "solid-js/web"
 import { v4 as uuidv4 } from 'uuid'
 import AppInjectFrontend, { setWorkState } from './InjectComponent'
 import { SocketProtocol } from './socket-protocol'
+import { setSocketStatus, socketData } from './state'
 
 var wsGlobalProto = new Promise<SocketProtocol>((resolve, reject) => {
-    const ws = new WebSocket('ws://localhost:8080/ws')
+    if(socketData.socket_uri == "") {
+        console.log("socket uri not initiated")
+        return
+    }
+    const ws = new WebSocket(socketData.socket_uri)
     const proc = new SocketProtocol(ws)
     ws.onopen = () => {
+        setSocketStatus('connected', true)
         resolve(proc)
-        
     }
+
 })
 
 function Connection(handle: (proc: SocketProtocol) => void) {
@@ -48,10 +54,22 @@ function injectFrontend() {
 
 
 function injectXhr(){
+    if(!document.URL.includes("shopee")) {
+        console.log("bukan page shopee")
+        return
+    }
     console.log("injecting xhr")
-    Connection(() => {
-        injectFrontend()
-    })
+    document
+            .addEventListener("DOMContentLoaded",
+                function () {
+                    injectFrontend()
+                }
+            );
+    // Connection(() => {
+    //     injectFrontend()
+    // })
+
+    
     
 
     window.fetch = new Proxy(window.fetch, {
@@ -92,7 +110,7 @@ function injectXhr(){
                 if(url.includes("v4/search/search_items")){
 
                     const query: any = parseQuery(res.url)
-
+                    
                     setWorkState("view_session_id", (sid) => {
                         if(sid === ""){
                             if(query.view_session_id) {
@@ -101,6 +119,7 @@ function injectXhr(){
                                 })
                             }
                         }
+                        setSocketStatus("joined", true)
                         return query.view_session_id ? query.view_session_id:""
                     })
                     
