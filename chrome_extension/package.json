@@ -1,6 +1,6 @@
 {
-    "name": "solid-chrome-extension-template",
-    "displayName": "Solid Chrome Extension Template",
+    "name": "shopee-experimental",
+    "displayName": "Shopee Experimental",
     "version": "0.202212.1",
     "description": "Chrome Extension boilerplate with SolidJS + Vite + ManifestV3",
     "license": "MIT",
