@@ -9,6 +9,7 @@ var wsGlobalProto = new Promise<SocketProtocol>((resolve, reject) => {
         console.log("socket uri not initiated")
         return
     }
+    
     const ws = new WebSocket(socketData.socket_uri)
     const proc = new SocketProtocol(ws)
     ws.onopen = () => {
@@ -49,6 +50,7 @@ function injectFrontend() {
     const inject = document.createElement("div")
     document.body.insertBefore(inject, document.body.firstChild)
     render(AppInjectFrontend, inject)
+
     
 }
 

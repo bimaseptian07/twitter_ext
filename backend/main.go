@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -129,7 +130,14 @@ func main() {
 
 	})
 
-	router.Run("localhost:8080")
+	certfile := os.Getenv("CERT_FILE")
+	keyfile := os.Getenv("KEY_FILE")
+	if certfile != "" && keyfile != "" {
+		router.RunTLS(":8080", certfile, keyfile)
+	} else {
+		router.Run("localhost:8080")
+	}
+
 }
 
 func CorsMiddleware(ctx *gin.Context) {
