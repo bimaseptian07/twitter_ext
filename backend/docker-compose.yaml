@@ -1,6 +1,12 @@
 version: '3.8'
 services:
 
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token eyJhIjoiMGEwMjgxMTUwMDMyZGRmY2E3OTJhYjBlYzIxZDIxNDYiLCJ0IjoiMGY5MTg4NzktN2M2NC00NTE0LThhNzAtZGRlYTNiYmQ5ZWI3IiwicyI6Ik1UazNNMkptTVRrdE5tSmhPUzAwWVdRd0xUaGlabUl0TTJJMFpHWTFaREE0WkRabSJ9
+
+
   masterjoin:
     build: .
     restart: always
@@ -17,4 +23,3 @@ services:
     volumes: 
       - ./certificate:/app/certificate
 
-    
