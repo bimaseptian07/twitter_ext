@@ -1,6 +1,11 @@
 
 
 export type RootEvent = {
+    
+	status_pool: {
+        connected_worker: number
+        ready_worker: number
+    }
     join: {
         view_session_id: string
     }

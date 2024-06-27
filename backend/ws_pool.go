@@ -2,14 +2,10 @@ package main
 
 import (
 	"errors"
+	"log"
 	"sync"
 	"time"
 )
-
-type StatusPoolEvent struct {
-	ConnectedWorker int `json:"connected_worker"`
-	ReadyWorker     int `json:"ready_worker"`
-}
 
 type WsPool struct {
 	count     int
@@ -104,4 +100,30 @@ func (pool *WsPool) GetPoolStatus() (*StatusPoolEvent, error) {
 	}
 
 	return &hasil, nil
+}
+
+func (pool *WsPool) BroadcastStatus() {
+	event := StatusPoolEvent{
+		ConnectedWorker: pool.count,
+		ReadyWorker:     0,
+	}
+
+	for _, item := range pool.Data {
+		if item.ViewSessionID == "" {
+			continue
+		}
+
+		event.ReadyWorker += 1
+	}
+
+	pool.Broadcast(&event)
+}
+
+func (pool *WsPool) Broadcast(event EventMsg) {
+	for _, item := range pool.Data {
+		err := item.Send(event)
+		if err != nil {
+			log.Println(err)
+		}
+	}
 }

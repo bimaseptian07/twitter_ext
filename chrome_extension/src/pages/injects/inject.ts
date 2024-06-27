@@ -1,31 +1,9 @@
 import { render } from "solid-js/web"
 import { v4 as uuidv4 } from 'uuid'
 import AppInjectFrontend, { setWorkState } from './InjectComponent'
-import { SocketProtocol } from './socket-protocol'
-import { setSocketStatus, socketData } from './state'
+import { setSocketStatus } from './state'
+import { Connection } from './websocket'
 
-var wsGlobalProto = new Promise<SocketProtocol>((resolve, reject) => {
-    if(socketData.socket_uri == "") {
-        console.log("socket uri not initiated")
-        return
-    }
-    
-    const ws = new WebSocket(socketData.socket_uri)
-    const proc = new SocketProtocol(ws)
-    ws.onopen = () => {
-        setSocketStatus('connected', true)
-        resolve(proc)
-    }
-    ws.onclose = () => {
-        setSocketStatus("connected", false)
-        setSocketStatus("joined", false)
-    }
-
-})
-
-function Connection(handle: (proc: SocketProtocol) => void) {
-    wsGlobalProto.then(handle)
-}
 
 // function createWebsocket(): Promise<SocketProtocol> {
 //     const prom = new Promise<SocketProtocol>((resolve, reject) => {

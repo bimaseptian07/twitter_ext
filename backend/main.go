@@ -35,6 +35,8 @@ func main() {
 
 	// registering websocket connection
 	router.GET("/ws", func(c *gin.Context) {
+		defer pool.BroadcastStatus()
+
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
 			return
@@ -46,11 +48,16 @@ func main() {
 		defer pool.Remove(proc.ID)
 
 		proc.Register(
-			&JoinEvent{},
+			&JoinEvent{
+				pool: pool,
+			},
 			&FetchCallbackEvent{
 				mapperCallback: callbackMapper,
 			},
 		)
+
+		go pool.BroadcastStatus()
+
 		proc.Listen()
 		fmt.Printf("closing connection for %s\n", proc.ID)
 	})

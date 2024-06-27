@@ -1,7 +1,8 @@
 
-import { Show, createEffect, createSignal, onCleanup } from 'solid-js';
+import { Show, createEffect, createSignal } from 'solid-js';
 import { createStore } from "solid-js/store";
 import { setSocketData, socketData, socketStatus } from './state';
+import { Connection } from './websocket';
 
 interface WorkerState {
     joined: boolean
@@ -23,31 +24,15 @@ function ServerStatus() {
         connected_worker: 0,
         ready_worker: 0
     })
-    const getStatus = () => {
-        const uri = new URL(socketData.socket_uri)
-        uri.pathname = "/status"
-        if(uri.protocol === "ws:") {
-            uri.protocol = "http:"
-        } else {
-            uri.protocol = "https:"
-        }
-        fetch(uri.toString()).then(res => {
-            res.json().then(data => {
+
+    createEffect(() => {
+        Connection(proc => {
+            proc.listen('status_pool', data => {
                 setStatus(data)
             })
         })
-    }
-
-    let interval = null
-
-    createEffect(() => {
-        interval = setInterval(getStatus, 10000)
     })
-    onCleanup(() => {
-        if(interval !== null) {
-            clearInterval(interval)
-        }
-    })
+    
     // fetch(socketData.socket_uri)
     return (
         <div class='p-3'>
