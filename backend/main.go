@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -142,6 +143,7 @@ func main() {
 	certfile := os.Getenv("CERT_FILE")
 	keyfile := os.Getenv("KEY_FILE")
 	if certfile != "" && keyfile != "" {
+		log.Println("running over https")
 		router.RunTLS(":8080", certfile, keyfile)
 	} else {
 		router.Run("localhost:8080")
