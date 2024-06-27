@@ -14,8 +14,8 @@ services:
       - "8080:8080"
     
     environment:
-      - CERT_FILE=/app/certificate/myserver.pem
-      - KEY_FILE=/app/certificate/myserver.key
+      # - CERT_FILE=/app/certificate/myserver.pem
+      # - KEY_FILE=/app/certificate/myserver.key
       - GIN_MODE=release
       - DB_USER=postgres
       - DB_PASSWORD=postgres
