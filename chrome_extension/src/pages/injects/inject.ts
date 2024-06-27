@@ -18,6 +18,7 @@ var wsGlobalProto = new Promise<SocketProtocol>((resolve, reject) => {
     }
     ws.onclose = () => {
         setSocketStatus("connected", false)
+        setSocketStatus("joined", false)
     }
 
 })
