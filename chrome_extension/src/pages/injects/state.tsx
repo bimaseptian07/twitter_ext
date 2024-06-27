@@ -19,3 +19,11 @@ export const [socketStatus, setSocketStatus] = createStore<SocketStatus>({
     connected: false,
     joined: false
 })
+
+export interface WorkerState {
+    view_session_id: string
+
+}
+export const [sessionState, setSessionState] = createStore<WorkerState>({
+    view_session_id: ""
+})

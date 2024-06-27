@@ -9,6 +9,7 @@ export type RootEvent = {
     join: {
         view_session_id: string
     }
+    unjoin: {}
     fetch: {
         callback_id: string
         url: string

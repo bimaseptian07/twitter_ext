@@ -1,5 +1,5 @@
 import { SocketProtocol } from './socket-protocol'
-import { setSocketStatus, socketData } from './state'
+import { setSessionState, setSocketStatus, socketData } from './state'
 
 
 export var wsGlobalProto = new Promise<SocketProtocol>((resolve, reject) => {
@@ -17,8 +17,10 @@ export var wsGlobalProto = new Promise<SocketProtocol>((resolve, reject) => {
     ws.onclose = () => {
         setSocketStatus("connected", false)
         setSocketStatus("joined", false)
+        setSessionState("view_session_id", "")
         
     }
+    
 
 })
 

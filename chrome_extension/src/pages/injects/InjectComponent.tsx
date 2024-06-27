@@ -1,18 +1,7 @@
 
 import { Show, createEffect, createSignal } from 'solid-js';
-import { createStore } from "solid-js/store";
-import { setSocketData, socketData, socketStatus } from './state';
+import { sessionState, setSocketData, socketData, socketStatus } from './state';
 import { Connection } from './websocket';
-
-interface WorkerState {
-    joined: boolean
-    view_session_id: string
-
-}
-export const [workerState, setWorkState] = createStore<WorkerState>({
-    joined: false,
-    view_session_id: ""
-})
 
 export interface PoolStatus {
     connected_worker: number
@@ -89,7 +78,7 @@ export default function AppInjectFrontend() {
                     view_session_id
                 </div>
                 <div>
-                    : <b>{workerState.view_session_id}</b>
+                    : <b>{sessionState.view_session_id}</b>
                 </div>
             </div>
 

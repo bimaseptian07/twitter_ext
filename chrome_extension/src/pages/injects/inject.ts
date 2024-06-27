@@ -1,7 +1,7 @@
 import { render } from "solid-js/web"
 import { v4 as uuidv4 } from 'uuid'
-import AppInjectFrontend, { setWorkState } from './InjectComponent'
-import { setSocketStatus } from './state'
+import AppInjectFrontend from './InjectComponent'
+import { setSessionState, setSocketStatus } from './state'
 import { Connection } from './websocket'
 
 
@@ -36,19 +36,41 @@ function injectFrontend() {
     
 }
 
+function detectPageBermasalah() {
+    const uri = window.location.href
+    if(!uri.includes("verify/traffic")) {
+        return
+    }
+    setSessionState('view_session_id', "")
+    Connection(proc => {
+        proc.send("unjoin", {})
+        proc.ws.close()
+    })
+    
+    console.log('page bermasalah detected..', window.location.href);
+}
+
 
 function injectXhr(){
     if(!document.URL.includes("shopee")) {
         console.log("bukan page shopee")
         return
     }
+
+    
     console.log("injecting xhr")
+    // ketika dom di load
+    detectPageBermasalah()
     document
             .addEventListener("DOMContentLoaded",
                 function () {
                     injectFrontend()
                 }
             );
+
+
+            window.navigation.addEventListener("navigate", detectPageBermasalah)
+            window.navigation.addEventListener("currententrychange", detectPageBermasalah)
     // Connection(() => {
     //     injectFrontend()
     // })
@@ -95,7 +117,7 @@ function injectXhr(){
 
                     const query: any = parseQuery(res.url)
                     
-                    setWorkState("view_session_id", (sid) => {
+                    setSessionState("view_session_id", (sid) => {
                         if(sid === ""){
                             if(query.view_session_id) {
                                 proc.send("join", {
