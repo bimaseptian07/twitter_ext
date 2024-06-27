@@ -17,8 +17,7 @@ services:
       # - CERT_FILE=/app/certificate/myserver.pem
       # - KEY_FILE=/app/certificate/myserver.key
       - GIN_MODE=release
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
+      - TUNNEL_MODE=true
 
     volumes: 
       - ./certificate:/app/certificate
