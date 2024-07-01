@@ -3,13 +3,22 @@ services:
 
   tunnel:
     image: cloudflare/cloudflared:latest
-    restart: unless-stopped
+    restart: always
     command: tunnel --no-autoupdate run --token eyJhIjoiMGEwMjgxMTUwMDMyZGRmY2E3OTJhYjBlYzIxZDIxNDYiLCJ0IjoiMGY5MTg4NzktN2M2NC00NTE0LThhNzAtZGRlYTNiYmQ5ZWI3IiwicyI6Ik1UazNNMkptTVRrdE5tSmhPUzAwWVdRd0xUaGlabUl0TTJJMFpHWTFaREE0WkRabSJ9
-
+    depends_on:
+      masterjoin:
+        condition: service_healthy
 
   masterjoin:
     build: .
     restart: always
+    healthcheck: 
+      test: "curl -f http://localhost:8080/status"
+      interval: 20s
+      start_period: 20s
+      timeout: 10s
+      retries: 2
+
     ports:
       - "8080:8080"
     
