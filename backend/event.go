@@ -53,6 +53,40 @@ func (j *JoinEvent) Exec(proc *PdcSocketProtocol) error {
 	return nil
 }
 
+type GetterItem struct {
+	Kind  string `json:"kind"`
+	Value string `json:"value"`
+}
+type AntiCrawler struct {
+	Appkey string `json:"appKey"`
+}
+
+type FetchEventCustom struct {
+	CallbackID  string                 `json:"callback_id"`
+	RouteID     string                 `json:"route_id"`
+	Url         string                 `json:"url"`
+	Method      string                 `json:"method"`
+	Body        string                 `json:"body"`
+	Headers     map[string]*GetterItem `json:"headers"`
+	Credentials string                 `json:"credentials,omitempty"`
+	AntiCrawler *AntiCrawler           `json:"anticrawler,omitempty"`
+}
+
+// CreateEmpty implements EventMsg.
+func (f *FetchEventCustom) CreateEmpty() (EventMsg, error) {
+	return &FetchEventCustom{}, nil
+}
+
+// EventName implements EventMsg.
+func (f *FetchEventCustom) EventName() string {
+	return "fetch_custom"
+}
+
+// Exec implements EventMsg.
+func (f *FetchEventCustom) Exec(proc *PdcSocketProtocol) error {
+	return nil
+}
+
 type FetchEvent struct {
 	CallbackID string `json:"callback_id"`
 	RouteID    string `json:"route_id"`

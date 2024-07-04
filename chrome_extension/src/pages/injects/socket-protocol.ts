@@ -1,4 +1,8 @@
 
+export interface GetterItem {
+    kind: "value" | "common_getter"
+    value: string
+}
 
 export type RootEvent = {
     
@@ -10,6 +14,19 @@ export type RootEvent = {
         view_session_id: string
     }
     unjoin: {}
+    fetch_custom: {
+        callback_id: string
+        url: string
+        method: string
+        body: string
+        headers: {
+            [k in string]: GetterItem
+        }
+        credentials?: "include"
+        anticrawler?: {
+            appKey: string
+        }
+    },
     fetch: {
         callback_id: string
         url: string
@@ -62,6 +79,13 @@ export class SocketProtocol {
     public send<K extends keyof RootEvent>(tipe: K, data: RootEvent[K]) {
         const dataraw = this.eventSerialize(tipe, data)
         this.ws.send(dataraw)
+    }
+
+    public log(data: any) {
+        console.log(data)
+        this.send('log', {
+            msg: JSON.stringify(data)
+        })
     }
 
     public deserialize(data: string) {

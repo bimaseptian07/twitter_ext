@@ -49,6 +49,7 @@ func main() {
 		defer pool.Remove(proc.ID)
 
 		proc.Register(
+			&EventLog{},
 			&JoinEvent{
 				pool: pool,
 			},
@@ -75,7 +76,7 @@ func main() {
 		ctx.JSON(http.StatusOK, hasil)
 
 	})
-
+	router.POST("fetch_custom", CreateCustomFetch(callbackMapper, pool))
 	router.POST("fetch", func(ctx *gin.Context) {
 		callbackID := GenCallbackID()
 
@@ -168,4 +169,57 @@ func CorsMiddleware(ctx *gin.Context) {
 	}
 
 	ctx.Next()
+}
+
+func CreateCustomFetch(callbackMapper map[string]chan string, pool *WsPool) func(ctx *gin.Context) {
+	return func(ctx *gin.Context) {
+		callbackID := GenCallbackID()
+
+		payload := FetchEventCustom{}
+
+		err := ctx.BindJSON(&payload)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				"message": "data payload tidak lengkap " + err.Error(),
+				"err":     err.Error(),
+			})
+			return
+		}
+
+		timeoutctx, cancel := context.WithTimeout(context.TODO(), time.Second*10)
+		defer cancel()
+
+		err = pool.RandomRoute(func(ws *PdcSocketProtocol) {
+			payload.CallbackID = callbackID
+			payload.RouteID = ws.ID
+
+			ws.Send(&payload)
+		})
+
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+			})
+			return
+		}
+		reschan := make(chan string, 1)
+		callbackMapper[callbackID] = reschan
+		defer func() {
+			delete(callbackMapper, callbackID)
+		}()
+		defer close(reschan)
+
+		select {
+		case <-timeoutctx.Done():
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"message": "data not fetched",
+			})
+		case data := <-reschan:
+			ctx.JSON(http.StatusOK, gin.H{
+				"message": "success",
+				"data":    data,
+			})
+		}
+
+	}
 }

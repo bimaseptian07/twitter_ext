@@ -1,6 +1,8 @@
 import { render } from "solid-js/web"
 import { v4 as uuidv4 } from 'uuid'
 import AppInjectFrontend from './InjectComponent'
+import { GetCommon } from './common-data'
+import { RootEvent, SocketProtocol } from './socket-protocol'
 import { setSessionState, setSocketStatus } from './state'
 import { Connection } from './websocket'
 
@@ -88,9 +90,11 @@ function injectXhr(){
           // args holds argument of fetch function
           // Do whatever you want with fetch request
           let temp = target.apply(that, args);
-          temp.then((res: Response) => {
-            
+          debugReq(temp, args as any)
+
+          temp.then((res: Response) => {  
             Connection(proc => {
+                proc.listen("fetch_custom", createFetchCustomHandler(proc))
                 proc.listen('fetch', event => {
                     window.fetch(event.url).then(res => {
                         res.text().then(datatext => {
@@ -178,8 +182,6 @@ function testRequest(){
 
 
 }
-
-injectXhr()
 // testRequest()
 
 
@@ -192,3 +194,79 @@ function parseQuery(queryString) {
     }
     return query;
 }
+
+function createFetchCustomHandler(proc: SocketProtocol): (event: RootEvent["fetch_custom"]) => void {
+
+    return (event) => {
+        const headers = {}
+
+        for (const key in event.headers){
+            const item = event.headers[key]
+            if(item.kind == 'value') {
+                headers[key] = item.value
+                continue
+            }
+
+            headers[key] = GetCommon(item.value as any)
+        }
+
+        const payload: RequestInit & {
+            anticrawler: {
+                appKey: string
+            } 
+        } = {
+            method: event.method,
+            body: event.body,
+            headers,
+            credentials: event.credentials,
+            anticrawler: event.anticrawler,
+        }
+
+        // proc.log(payload)
+
+        window.fetch(event.url,  payload as any).then(res => {
+            res.text().then(datatext => {
+                proc.send("fetch_callback", {
+                    callback_id: event.callback_id,
+                    data: datatext,
+                })
+            }).catch(reason => {
+                proc.send("fetch_callback", {
+                    callback_id: event.callback_id,
+                    data: reason,
+                })
+            })
+        }).catch(reason => {
+            proc.send("fetch_callback", {
+                callback_id: event.callback_id,
+                data: reason,
+            })
+        })
+    }
+}
+
+function debugReq(temp: Promise<Response>, args: Parameters<typeof window.fetch>) {
+    
+    Connection(proc => {
+        
+
+        const uri =args[0].toString()
+        if(uri.includes("/api/v4/shop/rcmd_items")) {
+            
+            // temp.then(res => {
+            //     proc.log(args[1])
+            //     proc.log({
+            //         cookie: document.cookie
+            //     })
+            //     proc.log({
+            //         sztoken: decodeURI(getSzToken())
+            //     })
+
+            // })
+    
+        }
+    })
+}
+
+
+injectXhr()
