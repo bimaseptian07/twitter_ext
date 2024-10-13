@@ -1,8 +1,8 @@
 {
-    "name": "shopee-experimental",
-    "displayName": "Shopee Experimental",
+    "name": "twitter-experimental",
+    "displayName": "Twitter Experimental",
     "version": "0.202212.1",
-    "description": "Chrome Extension boilerplate with SolidJS + Vite + ManifestV3",
+    "description": "Twitter Experimental",
     "license": "MIT",
     "repository": {
         "type": "git",
@@ -19,6 +19,7 @@
     "type": "module",
     "dependencies": {
         "@solid-primitives/storage": "^3.7.1",
+        "axios": "^1.7.7",
         "solid-js": "^1.6.2",
         "url-parse": "^1.5.10",
         "uuid": "^9.0.1",

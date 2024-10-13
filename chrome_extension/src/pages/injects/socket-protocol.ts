@@ -5,6 +5,16 @@ export interface GetterItem {
 }
 
 export type RootEvent = {
+
+    keyword_event: {
+        data: string[]
+    }
+
+    keyboard_event: {
+        text: string
+        args?: string[]
+        keytap: boolean
+    }
     
 	status_pool: {
         connected_worker: number

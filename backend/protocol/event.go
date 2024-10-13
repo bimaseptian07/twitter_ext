@@ -1,4 +1,4 @@
-package main
+package protocol
 
 import (
 	"fmt"
@@ -9,13 +9,13 @@ import (
 
 type JoinEvent struct {
 	ViewSessionID string  `json:"view_session_id"`
-	pool          *WsPool `json:"-"`
+	Pool          *WsPool `json:"-"`
 }
 
 // CreateEmpty implements EventMsg.
 func (j *JoinEvent) CreateEmpty() (EventMsg, error) {
 	return &JoinEvent{
-		pool: j.pool,
+		Pool: j.Pool,
 	}, nil
 }
 
@@ -28,7 +28,7 @@ func (j *JoinEvent) EventName() string {
 func (j *JoinEvent) Exec(proc *PdcSocketProtocol) error {
 	proc.ViewSessionID = j.ViewSessionID
 	fmt.Printf("new worker joining on server %s \n", proc.ID)
-	j.pool.BroadcastStatus()
+	j.Pool.BroadcastStatus()
 
 	// log.Println("user joined", j.ViewSessionID)
 	// uri := `https://shopee.co.id/api/v4/search/search_items?by=relevancy&extra_params={"global_search_session_id":"gs-817cad85-7860-4cb6-b9a6-3bda7f80a891","search_session_id":"ss-c3137007-028a-41a2-b037-077b6bf2bd06"}&keyword=asdasd&limit=60&newest=0&order=desc&page_type=search&scenario=PAGE_GLOBAL_SEARCH&version=2&view_session_id=` + j.ViewSessionID
@@ -105,30 +105,6 @@ func (f *FetchEvent) EventName() string {
 
 // Exec implements EventMsg.
 func (f *FetchEvent) Exec(proc *PdcSocketProtocol) error {
-	return nil
-}
-
-type FetchCallbackEvent struct {
-	CallbackID     string `json:"callback_id"`
-	Data           string `json:"data"`
-	mapperCallback map[string]chan string
-}
-
-// CreateEmpty implements EventMsg.
-func (f *FetchCallbackEvent) CreateEmpty() (EventMsg, error) {
-	return &FetchCallbackEvent{
-		mapperCallback: f.mapperCallback,
-	}, nil
-}
-
-// EventName implements EventMsg.
-func (f *FetchCallbackEvent) EventName() string {
-	return "fetch_callback"
-}
-
-// Exec implements EventMsg.
-func (f *FetchCallbackEvent) Exec(proc *PdcSocketProtocol) error {
-	f.mapperCallback[f.CallbackID] <- f.Data
 	return nil
 }
 

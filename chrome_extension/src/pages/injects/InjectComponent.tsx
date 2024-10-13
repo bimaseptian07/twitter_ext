@@ -1,90 +1,134 @@
+// import { KeywordRes, useQuery } from "@src/helpers/sdk"
+import { createEffect } from "solid-js"
+import { SocketProtocol } from "./socket-protocol"
+import { Connection } from "./websocket"
+// import { clearInterval } from "timers"
+// import { createEffect } from "solid-js"
 
-import { Show, createEffect, createSignal } from 'solid-js';
-import { sessionState, setSocketData, socketData, socketStatus } from './state';
-import { Connection } from './websocket';
 
-export interface PoolStatus {
-    connected_worker: number
-    ready_worker: number
-}
 
-function ServerStatus() {
-    const [status, setStatus] = createSignal<PoolStatus>({
-        connected_worker: 0,
-        ready_worker: 0
-    })
+class ExplorePage {
+    write(elem: HTMLElement, textd: string) {
+        for(const c of textd) {
+            let ctrlCEvent = new KeyboardEvent('keydown', {
+                key: c
+            })
+              
+            elem.dispatchEvent(ctrlCEvent)
+        }
+        
+    }
+    public findByXpath<T extends HTMLElement>(path: string){
+        const prom = new Promise<T>((resolve, reject)=> {
+            let inter: NodeJS.Timer = null
+            setTimeout(() => {
+                if(inter != null) {
+                    clearInterval(inter)
+                }
+                reject("element not found")
+            }, 10000)
+            
+            inter = setInterval(() => {
+                const res = document.evaluate(path, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null)
+                if(res.singleNodeValue != null){
+                    clearInterval(inter)
+                    resolve(res.singleNodeValue as any)
+                }
+            }, 500)
+        })
+        return prom
+    }
+    public async search(keyword: string){
+        const searchNode = await this.findByXpath<HTMLInputElement>('//*/input[@data-testid="SearchBox_Search_Input"]')
+        searchNode.focus()
+        searchNode.select()
 
-    createEffect(() => {
-        Connection(proc => {
-            proc.listen('status_pool', data => {
-                setStatus(data)
+        const prom = new Promise((resolve, reject) => {
+            
+            
+            Connection(async (proc: SocketProtocol) => {
+                
+                proc.send("keyboard_event", {
+                    text: keyword,
+                    keytap: false
+                })
+
+                proc.send("keyboard_event", {
+                    text: "enter",
+                    keytap: true
+                })
+                
+
+                const comment = await this.findByXpath('//*/button[@data-testid="reply"]')
+                comment.click()
+
+                setTimeout(() => {
+                    proc.send("keyboard_event", {
+                        text: `see me profile for ${keyword} insight`,
+                        keytap: false
+                    })
+
+                    setTimeout(async ()=> {
+                        const reply = await this.findByXpath('//*/button[@data-testid="tweetButton"]')
+                        reply.click()
+                        setTimeout(() => {
+                            resolve(true)
+                        }, 4000)
+                        
+                    }, 4000)
+
+                }, 4000)
             })
         })
-    })
-    
-    // fetch(socketData.socket_uri)
-    return (
-        <div class='p-3'>
-            <b>{status().connected_worker}</b> Browser Connected <br />
-            <b>{status().ready_worker}</b> Browser Ready Connected 
-        </div>
-    )
+        return await prom
+    }
+
+    public getElementByXpath(path) {
+        return document.evaluate(path, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+    }
 }
 
+
+
+
+
 export default function AppInjectFrontend() {
-    const [uri, setUri] = createSignal<string>(socketData.socket_uri)
+    
 
-    return <div class="grid grid-cols-2 h-28">
-        <div class="p-2">
-            <div class="flex w-full items-center gap-2">
-                <input 
-                    placeholder='Connect Server...'
-                    value={socketData.socket_uri}
-                    onChange={e => setUri(e.target.value)}
-                    class='w-full px-2.5 py-1.5 outline-0 border border-stone-200 rounded placeholder:text-stone-400 focus:outline focus:outline-sky-400 focus:outline-4' />
-                <div>
-                    <button
-                        onClick={() => {
-                            setSocketData("socket_uri", uri())
-                        }}
-                        class="bg-sky-500 text-white px-2 py-1 rounded shadow capitalize"
-                    >set</button>
+    const startScript = ()=> {
+        const explore = new ExplorePage();
+        (document as any).page = explore;
+        
+        Connection((proc: SocketProtocol)  => {
+            proc.listen("keyword_event", async (data) => {
+                let items = data.data
+
+                for(let c = 0;c<100;c++) {
+                    const item = items[Math.floor((Math.random()*items.length))];
+
+                    try {
+                        await explore.search(item)
+                    } catch(e) {
+                        console.error(e, "reloading page")
+                        window.location.reload()
+                    }
                     
-                </div>
-                <Show when={socketStatus.connected}>
-                    <span class='px-2.5 text-sm py-1 bg-emerald-500 text-white rounded shadow w-max h-min'>
-                        <span>Connected</span>
-                    </span>
-                </Show>
-                <Show when={socketStatus.joined}>
-                    <span class='px-2.5 text-sm py-1 bg-emerald-500 text-white rounded shadow w-max h-min'>
-                        <span>Joined</span>
-                    </span>
-                </Show>
-            </div>
-            <ServerStatus />
+                }
+                
+            })
 
-        </div>
+            proc.send("keyword_event", {data:[]})
 
+
+        });
         
+        // const explore = new ExplorePage();
+        // (document as any).page = explore;
+    
+        // explore.search("shopee")
+    }
 
-        
-
-        <div class="p-2">
-        
-            <b>Data Page :</b>
-            <div class="grid grid-cols-2">
-                <div>
-                    view_session_id
-                </div>
-                <div>
-                    : <b>{sessionState.view_session_id}</b>
-                </div>
-            </div>
-
-        </div>
-
-
-
+    return <div>
+        <button onClick={()=> startScript()}>Start</button>
     </div>
 }

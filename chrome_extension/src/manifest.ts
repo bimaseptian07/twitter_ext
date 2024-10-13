@@ -31,7 +31,7 @@ const manifest = defineManifest(async () => ({
     //   js: ["src/pages/content/index.tsx"],
     // },
     {
-      matches: ["http://*/*", "https://*/*", "<all_urls>"],
+      matches: ["http://x.com/*", "https://x.com/*"],
       js: ["src/pages/injects/index.ts"],
       run_at: "document_start",
     },
@@ -40,7 +40,7 @@ const manifest = defineManifest(async () => ({
   web_accessible_resources: [
     {
       resources: ["assets/*.js", "assets/*.css", "assets/img/*"],
-      matches: ["*://*/*"],
+      matches: ["*://x.com/*"],
     },
   ],
 }));

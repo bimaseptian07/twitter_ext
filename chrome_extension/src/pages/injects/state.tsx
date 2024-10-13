@@ -6,9 +6,9 @@ export interface SocketData {
     socket_uri: string
 }
 
-export const [socketData, setSocketData] = makePersisted(createStore<SocketData>({
-    socket_uri: ""
-}), {storage: localStorage})
+export const [socketData, setSocketData] = createStore<SocketData>({
+    socket_uri: "ws://localhost:8008/v2/ipc"
+})
 
 export interface SocketStatus {
     connected: boolean

@@ -1,4 +1,4 @@
-package main
+package protocol
 
 import (
 	"encoding/json"
@@ -120,12 +120,10 @@ func (proc *PdcSocketProtocol) ListeningMessage() {
 			continue
 		}
 
-		go func() {
-			err := event.Exec(proc)
-			if err != nil {
-				proc.sendErr(err)
-			}
-		}()
+		err = event.Exec(proc)
+		if err != nil {
+			proc.sendErr(err)
+		}
 
 	}
 }
