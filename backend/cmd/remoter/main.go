@@ -121,7 +121,7 @@ func (g *GetKeywordEvent) Exec(proc *protocol.PdcSocketProtocol) error {
 
 type KeyboardEvent struct {
 	Text   string   `json:"text"`
-	args   []string `json:"args"`
+	Args   []string `json:"args"`
 	Keytap bool     `json:"keytap"`
 }
 
@@ -138,7 +138,7 @@ func (k *KeyboardEvent) EventName() string {
 // Exec implements protocol.EventMsg.
 func (k *KeyboardEvent) Exec(proc *protocol.PdcSocketProtocol) error {
 	if k.Keytap {
-		robotgo.KeyTap(k.Text, k.args)
+		robotgo.KeyTap(k.Text, k.Args)
 		return nil
 	}
 	robotgo.TypeStr(k.Text)

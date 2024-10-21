@@ -1,7 +1,10 @@
 // import { KeywordRes, useQuery } from "@src/helpers/sdk"
-import { createEffect } from "solid-js"
+import { createEffect, createSignal, Show } from "solid-js"
 import { SocketProtocol } from "./socket-protocol"
 import { Connection } from "./websocket"
+import { Subject } from "rxjs"
+import { createReplyFormat } from "./replyformat"
+import { createLocalStore } from "@src/helpers/localstorage"
 // import { clearInterval } from "timers"
 // import { createEffect } from "solid-js"
 
@@ -44,8 +47,6 @@ class ExplorePage {
         searchNode.select()
 
         const prom = new Promise((resolve, reject) => {
-            
-            
             Connection(async (proc: SocketProtocol) => {
                 
                 proc.send("keyboard_event", {
@@ -61,24 +62,21 @@ class ExplorePage {
 
                 const comment = await this.findByXpath('//*/button[@data-testid="reply"]')
                 comment.click()
+                await delay(2000)
+                const rep = createReplyFormat("https://lapakaman.com/N6RBnEdhe")
+                proc.send("keyboard_event", {
+                    text: rep,
+                    keytap: false
+                })
 
-                setTimeout(() => {
-                    proc.send("keyboard_event", {
-                        text: `see me profile for ${keyword} insight`,
-                        keytap: false
-                    })
+                await delay(4000)
+                const reply = await this.findByXpath('//*/button[@data-testid="tweetButton"]')
+                reply.click()
+                await delay(1000)
 
-                    setTimeout(async ()=> {
-                        const reply = await this.findByXpath('//*/button[@data-testid="tweetButton"]')
-                        reply.click()
-                        setTimeout(() => {
-                            resolve(true)
-                        }, 4000)
-                        
-                    }, 4000)
-
-                }, 4000)
+                resolve(true)
             })
+            
         })
         return await prom
     }
@@ -88,47 +86,101 @@ class ExplorePage {
     }
 }
 
+type RandomActivityItem = "follow" | "search_comment" | ""
 
-
-
+// const randomActivity = new Subject<RandomActivityItem>()
 
 export default function AppInjectFrontend() {
-    
+    const [keyword, setKeyword] = createSignal<string[]>([])
+    const [action, setAction] = createSignal<RandomActivityItem>("")
+    const [isRun, setRun] = createLocalStore<{running: boolean}>({running: false})
 
-    const startScript = ()=> {
-        const explore = new ExplorePage();
-        (document as any).page = explore;
-        
-        Connection((proc: SocketProtocol)  => {
-            proc.listen("keyword_event", async (data) => {
-                let items = data.data
+    const explore = new ExplorePage();
+    (document as any).page = explore;
 
-                for(let c = 0;c<100;c++) {
-                    const item = items[Math.floor((Math.random()*items.length))];
+    const startRandom = async () => {
+        const datas: RandomActivityItem[] = ["follow", "follow", "search_comment"]
 
-                    try {
-                        await explore.search(item)
-                    } catch(e) {
-                        console.error(e, "reloading page")
-                        window.location.reload()
+        while(true){
+            if(!isRun.running){
+                await delay(1000)
+                continue
+            }
+            const item = datas[Math.floor((Math.random()*datas.length))];
+            setAction(item)
+            
+            switch(item) {
+                case "search_comment":
+                    try{
+                        await searchComment()
+                    } catch (e) {
+                        console.log(e)
+                        window.open("https://x.com/explore","_self")
                     }
                     
-                }
-                
+                    break
+                case "follow":
+
+                    try {
+                        const followbtn = await explore.findByXpath(`//*/button[contains(@data-testid, '-follow')]`)
+                        followbtn.click()
+                        await delay(2000)
+                    } catch(e) {
+                        console.log(e)
+                    }
+                    
+                    
+                    break
+
+            }
+            
+        }    
+    }
+
+
+    const searchComment = async () => {
+        const items = keyword()
+        const item = items[Math.floor((Math.random()*items.length))]
+
+        try {
+            await explore.search(item)
+        } catch(e) {
+            console.error(e, "reloading page")
+            window.location.reload()
+        }
+    }
+
+    createEffect(() => {
+        Connection((proc: SocketProtocol)  => {
+            proc.listen("keyword_event", (data) => {
+                setKeyword(data.data)
             })
 
             proc.send("keyword_event", {data:[]})
-
-
+            startRandom()
         });
-        
-        // const explore = new ExplorePage();
-        // (document as any).page = explore;
-    
-        // explore.search("shopee")
-    }
+    })
 
     return <div>
-        <button onClick={()=> startScript()}>Start</button>
+        <Show
+            when={isRun.running}
+            fallback={<button onClick={()=> setRun({running: true})}>Start</button>}
+        >
+            <button onClick={()=> setRun({running: false})}>Stop</button>
+        </Show>
+
+        
+        <div>len keyword {keyword().length}</div>
+        <div>current action {action()}</div>
+        
+
     </div>
+}
+
+
+
+function delay(t: number) {
+    return new Promise((resolve, reject) => {
+        setTimeout(resolve, t)
+    })
 }
